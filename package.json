@@ -14,8 +14,8 @@
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
 	"dependencies": {
-		"@slicky/tokenizer": "SlickyJS/Tokenizer#master",
-		"@slicky/utils": "SlickyJS/Utils#master"
+		"@slicky/tokenizer": "^1.0.5",
+		"@slicky/utils": "^1.0.10"
 	},
 	"devDependencies": {
 		"typescript": "^2.1.0",
