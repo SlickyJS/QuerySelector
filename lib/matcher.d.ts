@@ -1,0 +1,32 @@
+import { IDocumentWalker, DocumentParent, DocumentNode } from './documentWalker';
+export declare class Matcher {
+    private walker;
+    constructor(walker: IDocumentWalker);
+    querySelector(parent: DocumentParent, selector: string): DocumentNode;
+    querySelectorAll(parent: DocumentParent, selector: string): Array<DocumentNode>;
+    matches(element: DocumentNode, selector: string, parent?: DocumentParent): boolean;
+    private scan(parent, selector, onlyFirst?);
+    private scanChildNodes(elements, nodes, onlyFirst?, recursively?);
+    private scanSiblings(element, nodes, adjacent?, onlyFirst?);
+    private scanElement(element, nodes, onlyFirst?);
+    private matchParts(element, parts);
+    private matchPart(element, part);
+    private matchElementName(element, name);
+    private matchId(element, id);
+    private matchClass(element, className);
+    private matchAttribute(element, attr);
+    private matchPseudoClass(element, pseudoClass);
+    private isInList(str, search, caseSensitive?);
+    private isEqual(str, search, caseSensitive?);
+    private startsWith(str, search, caseSensitive?);
+    private endsWith(str, search, caseSensitive?);
+    private includes(str, search, caseSensitive?);
+    private isElementEmpty(element);
+    private isElementFirstChild(element);
+    private isElementLastChild(element);
+    private isElementFirstOfType(element);
+    private isElementLastOfType(element);
+    private getChildElements(parent);
+    private getTopParent(element);
+    private getAST(selector);
+}

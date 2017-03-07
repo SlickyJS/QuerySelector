@@ -1,0 +1,36 @@
+{
+	"name": "@slicky/query-selector",
+	"description": "CSS selectors implemented in javascript",
+	"version": "1.0.9",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:SlickyJS/QuerySelector.git"
+	},
+	"author": {
+		"name": "David Kudera",
+		"email": "kudera.d@gmail.com"
+	},
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"dependencies": {
+		"@slicky/tokenizer": "SlickyJS/Tokenizer#master",
+		"@slicky/utils": "SlickyJS/Utils#master"
+	},
+	"devDependencies": {
+		"typescript": "^2.1.0",
+		"ts-node": "^2.1.0",
+
+		"mocha": "^3.2.0",
+		"chai": "^3.5.0",
+
+		"@types/node": "^7.0.0",
+		"@types/mocha": "^2.2.0",
+		"@types/chai": "^3.4.0"
+	},
+	"scripts": {
+		"build": "tsc",
+		"pretest": "npm run build",
+		"test": "cd tests && mocha -r ts-node/register index.ts"
+	}
+}

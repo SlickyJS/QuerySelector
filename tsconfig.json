@@ -1,0 +1,12 @@
+{
+	"compilerOptions": {
+		"target": "es5",
+		"removeComments": true,
+		"declaration": true,
+		"outDir": "./lib",
+		"declarationDir": "./lib"
+	},
+	"include": [
+		"./src/**/*.ts"
+	]
+}

@@ -1,0 +1,9 @@
+import { InputStream } from './inputStream';
+import { Tokenizer } from './tokenizer';
+import { Parser } from './parser';
+export declare function createInputStreamFromString(input: string): InputStream;
+export declare function createTokenizerFromInputStream(input: InputStream): Tokenizer;
+export declare function createTokenizerFromString(input: string): Tokenizer;
+export declare function createParserFromTokenizer(input: Tokenizer): Parser;
+export declare function createParserFromInputStream(input: InputStream): Parser;
+export declare function createParserFromString(input: string): Parser;
