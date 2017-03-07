@@ -1,3 +1,8 @@
+[![NPM version](https://img.shields.io/npm/v/@slicky/query-selector.svg?style=flat-square)](https://www.npmjs.com/package/@slicky/query-selector)
+[![Build Status](https://img.shields.io/travis/SlickyJS/QuerySelector.svg?style=flat-square)](https://travis-ci.org/SlickyJS/QuerySelector)
+
+[![Donate](https://img.shields.io/badge/donate-PayPal-brightgreen.svg?style=flat-square)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=RQGEN5MDKSS6W)
+
 # Slicky/QuerySelector
 
 CSS selectors implemented in javascript
