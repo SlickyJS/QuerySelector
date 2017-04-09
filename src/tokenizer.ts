@@ -65,13 +65,13 @@ export class Tokenizer extends AbstractTokenizer<Token>
 	}
 
 
-	public matchPunctuation(ch?: string): void
+	public matchPunctuation(ch?: string): string
 	{
 		if (!this.isPunctuation(ch)) {
 			this.error('Expected punctuation' + (ch ? ' "' + ch + '"' : ''));
 		}
 
-		this.next();
+		return this.next().value;
 	}
 
 

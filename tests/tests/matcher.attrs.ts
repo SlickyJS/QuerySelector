@@ -30,6 +30,22 @@ describe('#Matcher.attrs', () => {
 			expect(match).to.be.equal(dom.childNodes[1]);
 		});
 
+		it('should match by existence of namespaces attribute', () => {
+			let dom = createDom([
+				{name: 'div'},
+				{
+					name: 'div',
+					attributes: {
+						's:title': 'lorem ipsum',
+					},
+				},
+			]);
+
+			let match = matcher.querySelector(dom, '[s:title]');
+
+			expect(match).to.be.equal(dom.childNodes[1]);
+		});
+
 		it('should match exact value of attribute case sensitively', () => {
 			let dom = createDom([
 				{

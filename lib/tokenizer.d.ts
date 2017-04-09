@@ -19,7 +19,7 @@ export declare class Tokenizer extends AbstractTokenizer<Token> {
     isName(): boolean;
     isString(): boolean;
     isWhitespace(): boolean;
-    matchPunctuation(ch?: string): void;
+    matchPunctuation(ch?: string): string;
     matchOperator(operator?: string): string;
     matchName(): string;
     matchString(): string;

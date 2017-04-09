@@ -33,6 +33,33 @@ describe('#Parser.attr', () => {
 			});
 		});
 
+		it('should parse attribute query with namespace', () => {
+			let ast = parseFromString('[s:title]');
+
+			expect(ast).to.be.eql({
+				type: ASTNodeType.QUERY,
+				selectors: [
+					{
+						type: ASTNodeType.SELECTOR,
+						nodes: [
+							{
+								type: ASTNodeType.PARTS,
+								parts: [
+									{
+										type: ASTNodeType.ATTRIBUTE,
+										caseSensitive: true,
+										name: 's:title',
+										operator: null,
+										value: null,
+									}
+								],
+							},
+						],
+					},
+				],
+			});
+		});
+
 		it('should parse attribute query with value', () => {
 			let ast = parseFromString('[title~="hello"]');
 

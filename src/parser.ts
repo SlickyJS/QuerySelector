@@ -173,6 +173,11 @@ export class Parser
 		let operator = null;
 		let value = null;
 
+		if (this.input.isPunctuation(':')) {
+			name += this.input.matchPunctuation(':');
+			name += this.input.matchName();
+		}
+
 		if (this.input.isOperator()) {
 			operator = this.input.matchOperator();
 			value = this.input.matchString();
