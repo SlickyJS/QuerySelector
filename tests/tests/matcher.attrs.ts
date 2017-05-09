@@ -460,6 +460,68 @@ describe('#Matcher.attrs', () => {
 			expect(match).to.be.equal(dom.childNodes[0]);
 		});
 
+		it('should match by multiple attributes', () => {
+			let dom = createDom([
+				{
+					name: 'template',
+					attributes: {
+						's:for': '',
+						's:for-of': 'items',
+					},
+				},
+			]);
+
+			let match = matcher.querySelector(dom, '[s:for][s:for-of]');
+
+			expect(match).to.be.equal(dom.childNodes[0]);
+		});
+
+		it('should not match by multiple attributes', () => {
+			let dom = createDom([
+				{
+					name: 'template',
+					attributes: {
+						's:if': 'false',
+					},
+				},
+			]);
+
+			let match = matcher.querySelector(dom, '[s:for][s:for-of]');
+
+			expect(match).to.be.equal(null);
+		});
+
+		it('should match by multiple attributes with element name', () => {
+			let dom = createDom([
+				{
+					name: 'template',
+					attributes: {
+						's:for': '',
+						's:for-of': 'items',
+					},
+				},
+			]);
+
+			let match = matcher.querySelector(dom, 'template[s:for][s:for-of]');
+
+			expect(match).to.be.equal(dom.childNodes[0]);
+		});
+
+		it('should not match by multiple attributes with element name', () => {
+			let dom = createDom([
+				{
+					name: 'template',
+					attributes: {
+						's:if': 'false',
+					},
+				},
+			]);
+
+			let match = matcher.querySelector(dom, 'template[s:for][s:for-of]');
+
+			expect(match).to.be.equal(null);
+		});
+
 	});
 
 });

@@ -114,34 +114,6 @@ describe('#Matcher.pseudoClass', () => {
 			expect(match).to.be.equal(dom.childNodes[0].childNodes[1]);
 		});
 
-		it('should match empty last of type', () => {
-			let dom = createDom([
-				{
-					name: 'div',
-					childNodes: [
-						{
-							name: 'span',
-						},
-						{
-							name: 'span',
-							childNodes: [
-								{
-									name: 'i',
-								},
-							],
-						},
-					],
-				},
-				{
-					name: 'div',
-				}
-			]);
-
-			let match = matcher.querySelector(dom, 'span:empty:last-of-type');
-
-			expect(match).to.be.equal(dom.childNodes[0].childNodes[0]);
-		});
-
 	});
 
 });

@@ -159,12 +159,12 @@ export class Matcher
 	private matchParts(element: DocumentNode, parts: _.ASTParts): boolean
 	{
 		for (let i = 0; i < parts.parts.length; i++) {
-			if (this.matchPart(element, parts.parts[i])) {
-				return true;
+			if (!this.matchPart(element, parts.parts[i])) {
+				return false;
 			}
 		}
 
-		return false;
+		return true;
 	}
 
 
