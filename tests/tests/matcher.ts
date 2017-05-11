@@ -253,6 +253,56 @@ describe('#Matcher', () => {
 			expect(matches).to.be.equal(false);
 		});
 
+		it('should not match element by id', () => {
+			let dom = createDom([
+				{
+					name: 'div',
+					attributes: {
+						id: 'b',
+					},
+				},
+			]);
+
+			let matches = matcher.matches(dom.childNodes[0], '#a');
+
+			expect(matches).to.be.equal(false);
+		});
+
+		it('should match element by id', () => {
+			let dom = createDom([
+				{
+					name: 'div',
+					attributes: {
+						id: 'b',
+					},
+				},
+			]);
+
+			let matches = matcher.matches(dom.childNodes[0], '#b');
+
+			expect(matches).to.be.equal(true);
+		});
+
+		it('should match inner element by id', () => {
+			let dom = createDom([
+				{
+					name: 'div',
+					childNodes: [
+						{
+							name: 'div',
+							attributes: {
+								id: 'b',
+							},
+						},
+					],
+				},
+			]);
+
+			let matches = matcher.matches(dom.childNodes[0].childNodes[0], '#b');
+
+			expect(matches).to.be.equal(true);
+		});
+
 	});
 
 });
