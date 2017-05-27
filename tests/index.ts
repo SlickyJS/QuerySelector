@@ -1,14 +1,3 @@
-import './tests/tokenizer.simple';
-import './tests/tokenizer.attrs';
-import './tests/tokenizer.combinators';
-import './tests/tokenizer.pseudoClasses';
-import './tests/tokenizer';
-import './tests/parser.element';
-import './tests/parser.class';
-import './tests/parser.id';
-import './tests/parser.pseudoClasses';
-import './tests/parser.attr';
-import './tests/parser';
 import './tests/matcher.simple';
 import './tests/matcher.attrs';
 import './tests/matcher.pseudoClass';

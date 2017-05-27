@@ -14,19 +14,17 @@
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
 	"dependencies": {
-		"@slicky/tokenizer": "^1.0.5",
-		"@slicky/utils": "^1.0.10"
+		"@slicky/ast-query-selector": "github:SlickyJS/ASTQuerySelector#master",
+		"@slicky/utils": "github:SlickyJS/Utils#master"
 	},
 	"devDependencies": {
-		"typescript": "^2.1.0",
-		"ts-node": "^2.1.0",
-
-		"mocha": "^3.2.0",
-		"chai": "^3.5.0",
-
-		"@types/node": "^7.0.0",
-		"@types/mocha": "^2.2.0",
-		"@types/chai": "^3.4.0"
+		"@types/chai": "^4.0.3",
+		"@types/mocha": "^2.2.41",
+		"@types/node": "^8.0.20",
+		"chai": "^4.1.1",
+		"mocha": "^3.5.0",
+		"ts-node": "^3.3.0",
+		"typescript": "^2.4.2"
 	},
 	"scripts": {
 		"build": "tsc",
