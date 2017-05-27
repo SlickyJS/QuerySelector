@@ -1,9 +1,6 @@
-import {map, merge, find, filter, exists, startsWith, endsWith, includes} from '@slicky/utils';
+import * as _ from '@slicky/ast-query-selector';
+import {exists, filter, find, merge, map, startsWith, endsWith, includes} from '@slicky/utils';
 import {IDocumentWalker, DocumentParent, DocumentNode} from './documentWalker';
-import {Parser} from './parser';
-import {Tokenizer} from './tokenizer';
-import {InputStream} from './inputStream';
-import * as _ from './ast';
 
 
 export class Matcher
@@ -13,15 +10,15 @@ export class Matcher
 	private walker: IDocumentWalker;
 
 
-	constructor(walker: IDocumentWalker)
+	constructor(documentWalker: IDocumentWalker)
 	{
-		this.walker = walker;
+		this.walker = documentWalker;
 	}
 
 
 	public querySelector(parent: DocumentParent, selector: string): DocumentNode
 	{
-		let ast = this.getAST(selector);
+		let ast = _.Parser.createFromString(selector).parse();
 
 		for (let i = 0; i < ast.selectors.length; i++) {
 			let found = this.scan(parent, ast.selectors[i], true);
@@ -31,13 +28,13 @@ export class Matcher
 			}
 		}
 
-		return null;
+		return undefined;
 	}
 
 
 	public querySelectorAll(parent: DocumentParent, selector: string): Array<DocumentNode>
 	{
-		let ast = this.getAST(selector);
+		let ast = _.Parser.createFromString(selector).parse();
 		let found = [];
 
 		for (let i = 0; i < ast.selectors.length; i++) {
@@ -51,27 +48,27 @@ export class Matcher
 	public matches(element: DocumentNode, selector: string, parent?: DocumentParent): boolean
 	{
 		if (!parent) {
-			parent = this.getTopParent(element);
+			parent = getTopParent(this.walker, element);
 		}
 
 		let matches = this.querySelectorAll(parent, selector);
 
-		return matches.indexOf(element) >= 0;		// todo add tests
+		return matches.indexOf(element) >= 0;
 	}
 
 
 	private scan(parent: DocumentParent, selector: _.ASTSelector, onlyFirst: boolean = false): Array<DocumentNode>
 	{
-		return this.scanChildNodes(this.getChildElements(parent), selector.nodes, onlyFirst);
+		return this.scanChildNodes(getChildElements(this.walker, parent), selector.parts, onlyFirst);
 	}
 
 
-	private scanChildNodes(elements: Array<DocumentNode>, nodes: Array<_.ASTSelectorNode>, onlyFirst: boolean = false, recursively: boolean = true): Array<DocumentNode>
+	private scanChildNodes(elements: Array<DocumentNode>, selector: _.ASTSelectorPart, onlyFirst: boolean = false, recursively: boolean = true): Array<DocumentNode>
 	{
 		let found = [];
 
 		for (let i = 0; i < elements.length; i++) {
-			found = merge(found, this.scanElement(elements[i], nodes, onlyFirst));
+			found = merge(found, this.scanElement(elements[i], selector, onlyFirst));
 
 			if (onlyFirst && found.length) {
 				break;
@@ -81,7 +78,7 @@ export class Matcher
 				continue;
 			}
 
-			found = merge(found, this.scanChildNodes(this.getChildElements(elements[i]), nodes, onlyFirst));
+			found = merge(found, this.scanChildNodes(getChildElements(this.walker, elements[i]), selector, onlyFirst));
 
 			if (onlyFirst && found.length) {
 				break;
@@ -92,9 +89,9 @@ export class Matcher
 	}
 
 
-	private scanSiblings(element: DocumentNode, nodes: Array<_.ASTSelectorNode>, adjacent: boolean = false, onlyFirst: boolean = false): Array<DocumentNode>
+	private scanSiblings(element: DocumentNode, selector: _.ASTSelectorPart, adjacent: boolean = false, onlyFirst: boolean = false): Array<DocumentNode>
 	{
-		let childNodes = this.getChildElements(this.walker.getParentNode(element));
+		let childNodes = getChildElements(this.walker, this.walker.getParentNode(element));
 		let position = childNodes.indexOf(element);
 
 		if (position === childNodes.length - 1) {
@@ -102,11 +99,11 @@ export class Matcher
 		}
 
 		if (adjacent) {
-			return this.scanElement(childNodes[position + 1], nodes, onlyFirst);
+			return this.scanElement(childNodes[position + 1], selector, onlyFirst);
 		}
 
 		for (let i = position + 1; i < childNodes.length; i++) {
-			let found = this.scanElement(childNodes[i], nodes, onlyFirst);
+			let found = this.scanElement(childNodes[i], selector, onlyFirst);
 
 			if (found.length) {
 				return found;
@@ -117,49 +114,54 @@ export class Matcher
 	}
 
 
-	private scanElement(element: DocumentNode, nodes: Array<_.ASTSelectorNode>, onlyFirst: boolean = false): Array<DocumentNode>
+	private scanElement(element: DocumentNode, selector: _.ASTSelectorPart, onlyFirst: boolean = false): Array<DocumentNode>
 	{
-		let node = nodes[0];
-		let next = nodes[1];
-
-		if (node.type === _.ASTNodeType.PARTS) {
-			if (!this.matchParts(element, node)) {
-				return [];
-			}
-
-			if (!exists(next)) {
+		if (selector instanceof _.ASTRulesSet) {
+			if (this.matchRules(element, selector)) {
 				return [element];
 			}
-		}
 
-		if (!exists(next)) {
 			return [];
-		}
 
-		if (next.type === _.ASTNodeType.DESCENDANT) {
-			return this.scanChildNodes(this.getChildElements(element), nodes.slice(2), onlyFirst);
-		}
+		} else if (selector instanceof _.ASTCombinator) {
+			return this.scanCombinator(element, selector, onlyFirst);
 
-		if (next.type === _.ASTNodeType.CHILD) {
-			return this.scanChildNodes(this.getChildElements(element), nodes.slice(2), onlyFirst, false);
-		}
-
-		if (next.type === _.ASTNodeType.ADJACENT_SIBLING) {
-			return this.scanSiblings(element, nodes.slice(2), true, onlyFirst);
-		}
-
-		if (next.type === _.ASTNodeType.GENERAL_SIBLING) {
-			return this.scanSiblings(element, nodes.slice(2), false, onlyFirst);
 		}
 
 		return [];
 	}
 
 
-	private matchParts(element: DocumentNode, parts: _.ASTParts): boolean
+	private scanCombinator(element: DocumentNode, combinator: _.ASTCombinator, onlyFirst: boolean = false): Array<DocumentNode>
 	{
-		for (let i = 0; i < parts.parts.length; i++) {
-			if (!this.matchPart(element, parts.parts[i])) {
+		if (!this.matchRules(element, combinator.left)) {
+			return [];
+		}
+
+		if (combinator instanceof _.ASTDescendant) {
+			return this.scanChildNodes(getChildElements(this.walker, element), combinator.right, onlyFirst);
+		}
+
+		if (combinator instanceof _.ASTChild) {
+			return this.scanChildNodes(getChildElements(this.walker, element), combinator.right, onlyFirst, false);
+		}
+
+		if (combinator instanceof _.ASTAdjacentSibling) {
+			return this.scanSiblings(element, combinator.right, true, onlyFirst);
+		}
+
+		if (combinator instanceof _.ASTGeneralSibling) {
+			return this.scanSiblings(element, combinator.right, false, onlyFirst);
+		}
+
+		return [];
+	}
+
+
+	private matchRules(element: DocumentNode, rules: _.ASTRulesSet): boolean
+	{
+		for (let i = 0; i < rules.parts.length; i++) {
+			if (!this.matchRule(element, rules.parts[i])) {
 				return false;
 			}
 		}
@@ -168,202 +170,143 @@ export class Matcher
 	}
 
 
-	private matchPart(element: DocumentNode, part: _.ASTSimpleSelector): boolean
+	private matchRule(element: DocumentNode, rule: _.ASTRule): boolean
 	{
-		switch (part.type) {
-			case _.ASTNodeType.ELEMENT: return this.matchElementName(element, part);
-			case _.ASTNodeType.ID: return this.matchId(element, part);
-			case _.ASTNodeType.CLASS: return this.matchClass(element, part);
-			case _.ASTNodeType.ATTRIBUTE: return this.matchAttribute(element, part);
-			case _.ASTNodeType.PSEUDO_CLASS: return this.matchPseudoClass(element, part);
+		if (rule instanceof _.ASTElement) {
+			return this.walker.getNodeName(element) === rule.name;
 		}
 
-		part = <_.ASTSimpleSelector>part;
-
-		throw new Error(`Matcher: can not match by ${_.ASTNodeType[part.type]} ("${part.name}")`);
-	}
-
-
-	private matchElementName(element: DocumentNode, name: _.ASTElement): boolean
-	{
-		return name.name === this.walker.getNodeName(element);
-	}
-
-
-	private matchId(element: DocumentNode, id: _.ASTId): boolean
-	{
-		return id.name === this.walker.getAttribute(element, 'id');
-	}
-
-
-	private matchClass(element: DocumentNode, className: _.ASTClass): boolean
-	{
-		return this.isInList(this.walker.getAttribute(element, 'class') || '', className.name);
-	}
-
-
-	private matchAttribute(element: DocumentNode, attr: _.ASTAttribute): boolean
-	{
-		let value = this.walker.getAttribute(element, attr.name);
-
-		if (attr.operator === null && attr.value === null) {
-			return value != null;
+		if (rule instanceof _.ASTId) {
+			return this.walker.getAttribute(element, 'id') === rule.name;
 		}
 
-		switch (attr.operator) {
-			case '=': return this.isEqual(value, attr.value, attr.caseSensitive);
-			case '~=': return this.isInList(value, attr.value, attr.caseSensitive);
-			case '*=': return this.includes(value, attr.value, attr.caseSensitive);
-			case '|=': return this.isEqual(value, attr.value, attr.caseSensitive) || this.startsWith(value, attr.value + '-', attr.caseSensitive);
-			case '^=': return this.isEqual(value, attr.value, attr.caseSensitive) || this.startsWith(value, attr.value, attr.caseSensitive);
-			case '$=': return this.isEqual(value, attr.value, attr.caseSensitive) || this.endsWith(value, attr.value, attr.caseSensitive);
+		if (rule instanceof _.ASTClass) {
+			return isInList(this.walker.getAttribute(element, 'class') || '', rule.name);
 		}
 
-		throw new Error(`Matcher: can not match by attribute [${attr.name + attr.operator}"${attr.value}"]`);
-	}
-
-
-	private matchPseudoClass(element: DocumentNode, pseudoClass: _.ASTPseudoClass): boolean
-	{
-		switch (pseudoClass.name) {
-			case 'empty': return this.isElementEmpty(element);
-			case 'first-child': return this.isElementFirstChild(element);
-			case 'last-child': return this.isElementLastChild(element);
-			case 'first-of-type': return this.isElementFirstOfType(element);
-			case 'last-of-type': return this.isElementLastOfType(element);
-		}
-
-		throw new Error(`Matcher: can not match by pseudo class :${pseudoClass.name}`);
-	}
-
-
-	private isInList(str: string, search: string, caseSensitive: boolean = true): boolean
-	{
-		let list = str.split(' ');
-
-		if (!caseSensitive) {
-			list = map(list, (item: string) => item.toLowerCase());
-		}
-
-		return caseSensitive ? list.indexOf(search) >= 0 : list.indexOf(search.toLowerCase()) >= 0;
-	}
-
-
-	private isEqual(str: string, search: string, caseSensitive: boolean = true): boolean
-	{
-		return caseSensitive ? str === search : str.toLowerCase() === search.toLowerCase();
-	}
-
-
-	private startsWith(str: string, search: string, caseSensitive: boolean = true): boolean
-	{
-		if (!caseSensitive) {
-			str = str.toLowerCase();
-			search = search.toLowerCase();
-		}
-
-		return startsWith(str, search);
-	}
-
-
-	private endsWith(str: string, search: string, caseSensitive: boolean = true): boolean
-	{
-		if (!caseSensitive) {
-			str = str.toLowerCase();
-			search = search.toLowerCase();
-		}
-
-		return endsWith(str, search);
-	}
-
-
-	private includes(str: string, search: string, caseSensitive: boolean = true): boolean
-	{
-		if (!caseSensitive) {
-			str = str.toLowerCase();
-			search = search.toLowerCase();
-		}
-
-		return includes(str, search);
-	}
-
-
-	private isElementEmpty(element: DocumentNode): boolean
-	{
-		let childNodes = this.walker.getChildNodes(element);
-
-		for (let i = 0; childNodes.length; i++) {
-			if (this.walker.isString(childNodes[i]) || this.walker.isElement(childNodes[i])) {
-				return false;
+		if (rule instanceof _.ASTPseudoClass) {
+			switch (rule.name) {
+				case 'empty': return isElementEmpty(this.walker, element);
+				case 'first-child': return isElementFirstChild(this.walker, element);
+				case 'last-child': return isElementLastChild(this.walker, element);
+				case 'first-of-type': return isElementFirstOfType(this.walker, element);
+				case 'last-of-type': return isElementLastOfType(this.walker, element);
 			}
+
+			throw new Error(`Matcher: can not match by pseudo class :${rule.name}`);
 		}
 
-		return true;
-	}
+		if (rule instanceof _.ASTAttribute) {
+			let value = this.walker.getAttribute(element, rule.name);
 
+			if (!exists(rule.operator) && !exists(rule.value)) {
+				return value != null;
+			}
 
-	private isElementFirstChild(element: DocumentNode): boolean
-	{
-		return this.getChildElements(this.walker.getParentNode(element)).indexOf(element) === 0;
-	}
+			switch (rule.operator) {
+				case '=': return isEqual(value, rule.value, rule.caseSensitive);
+				case '~=': return isInList(value, rule.value, rule.caseSensitive);
+				case '*=': return includes(value, rule.value, rule.caseSensitive);
+				case '|=': return isEqual(value, rule.value, rule.caseSensitive) || startsWith(value, rule.value + '-', rule.caseSensitive);
+				case '^=': return isEqual(value, rule.value, rule.caseSensitive) || startsWith(value, rule.value, rule.caseSensitive);
+				case '$=': return isEqual(value, rule.value, rule.caseSensitive) || endsWith(value, rule.value, rule.caseSensitive);
+			}
 
-
-	private isElementLastChild(element: DocumentNode): boolean
-	{
-		let childNodes = this.getChildElements(this.walker.getParentNode(element));
-		return childNodes.indexOf(element) === (childNodes.length - 1);
-	}
-
-
-	private isElementFirstOfType(element: DocumentNode): boolean
-	{
-		let childNodes = this.getChildElements(this.walker.getParentNode(element));
-		let type = this.walker.getNodeName(element);
-
-		let first = find(childNodes, (node) => {
-			return this.walker.getNodeName(node) === type;
-		});
-
-		return first === element;
-	}
-
-
-	private isElementLastOfType(element: DocumentNode): boolean
-	{
-		let childNodes = this.getChildElements(this.walker.getParentNode(element));
-		let type = this.walker.getNodeName(element);
-
-		let others = filter(childNodes, (node) => {
-			return this.walker.getNodeName(node) === type;
-		});
-
-		return others[others.length - 1] === element;
-	}
-
-
-	private getChildElements(parent: DocumentParent): Array<DocumentNode>
-	{
-		return filter(this.walker.getChildNodes(parent), (node) => {
-			return this.walker.isElement(node);
-		});
-	}
-
-
-	private getTopParent(element: DocumentNode): DocumentParent
-	{
-		let parent: DocumentParent;
-
-		while (parent = this.walker.getParentNode(element)) {
-			element = parent;
+			throw new Error(`Matcher: can not match by attribute [${rule.name + rule.operator}"${rule.value}"]`);
 		}
 
-		return element;
+		return false;
 	}
 
+}
 
-	private getAST(selector: string): _.ASTQuery
-	{
-		return (new Parser(new Tokenizer(new InputStream(selector)))).parse();
+
+function isInList(str: string, search: string, caseSensitive: boolean = true): boolean
+{
+	let list = str.split(' ');
+
+	if (!caseSensitive) {
+		list = map(list, (item: string) => item.toLowerCase());
 	}
 
+	return caseSensitive ? list.indexOf(search) >= 0 : list.indexOf(search.toLowerCase()) >= 0;
+}
+
+
+function isEqual(str: string, search: string, caseSensitive: boolean = true): boolean
+{
+	return caseSensitive ? str === search : str.toLowerCase() === search.toLowerCase();
+}
+
+
+function getTopParent(walker: IDocumentWalker, element: DocumentNode): DocumentParent
+{
+	let parent: DocumentParent;
+
+	while (parent = walker.getParentNode(element)) {
+		element = parent;
+	}
+
+	return element;
+}
+
+
+function getChildElements(walker: IDocumentWalker, parent: DocumentParent): Array<DocumentNode>
+{
+	return filter(walker.getChildNodes(parent), (node) => {
+		return walker.isElement(node);
+	});
+}
+
+
+function isElementEmpty(walker: IDocumentWalker, element: DocumentNode): boolean
+{
+	let childNodes = walker.getChildNodes(element);
+
+	for (let i = 0; childNodes.length; i++) {
+		if (walker.isString(childNodes[i]) || walker.isElement(childNodes[i])) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
+function isElementFirstChild(walker: IDocumentWalker, element: DocumentNode): boolean
+{
+	return getChildElements(walker, walker.getParentNode(element)).indexOf(element) === 0;
+}
+
+
+function isElementLastChild(walker: IDocumentWalker, element: DocumentNode): boolean
+{
+	let childNodes = getChildElements(walker, walker.getParentNode(element));
+	return childNodes.indexOf(element) === (childNodes.length - 1);
+}
+
+
+function isElementFirstOfType(walker: IDocumentWalker, element: DocumentNode): boolean
+{
+	let childNodes = getChildElements(walker, walker.getParentNode(element));
+	let type = walker.getNodeName(element);
+
+	let first = find(childNodes, (node) => {
+		return walker.getNodeName(node) === type;
+	});
+
+	return first === element;
+}
+
+
+function isElementLastOfType(walker: IDocumentWalker, element: DocumentNode): boolean
+{
+	let childNodes = getChildElements(walker, walker.getParentNode(element));
+	let type = walker.getNodeName(element);
+
+	let others = filter(childNodes, (node) => {
+		return walker.getNodeName(node) === type;
+	});
+
+	return others[others.length - 1] === element;
 }

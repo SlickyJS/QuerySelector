@@ -488,7 +488,7 @@ describe('#Matcher.attrs', () => {
 
 			let match = matcher.querySelector(dom, '[s:for][s:for-of]');
 
-			expect(match).to.be.equal(null);
+			expect(match).to.be.equal(undefined);
 		});
 
 		it('should match by multiple attributes with element name', () => {
@@ -519,7 +519,7 @@ describe('#Matcher.attrs', () => {
 
 			let match = matcher.querySelector(dom, 'template[s:for][s:for-of]');
 
-			expect(match).to.be.equal(null);
+			expect(match).to.be.equal(undefined);
 		});
 
 	});
