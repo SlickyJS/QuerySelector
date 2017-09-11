@@ -114,6 +114,24 @@ describe('#Matcher.pseudoClass', () => {
 			expect(match).to.be.equal(dom.childNodes[0].childNodes[1]);
 		});
 
+		it('should match with :not pseudo class', () => {
+			let dom = createDom([
+				{
+					name: 'div',
+					attributes: {
+						'class': 'list',
+					},
+				},
+				{
+					name: 'div',
+				},
+			]);
+
+			let match = matcher.querySelector(dom, 'div:not(.list)');
+
+			expect(match).to.be.equal(dom.childNodes[1]);
+		});
+
 	});
 
 });

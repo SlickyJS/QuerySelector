@@ -103,3 +103,4 @@ let matches = matcher.matches(element, 'a.btn');					// true
 * [First of type](https://developer.mozilla.org/en-US/docs/Web/CSS/:first-of-type) (`:first-of-type`)
 * [Last child](https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child) (`:last-child`)
 * [Last of type](https://developer.mozilla.org/en-US/docs/Web/CSS/:last-of-type) (`:last-of-type`)
+* [Not](https://developer.mozilla.org/en-US/docs/Web/CSS/:not) (`:not()`)

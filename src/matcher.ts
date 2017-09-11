@@ -18,8 +18,24 @@ export class Matcher
 
 	public querySelector(parent: DocumentParent, selector: string): DocumentNode
 	{
-		let ast = _.Parser.createFromString(selector).parse();
+		return this._querySelectorByAST(parent, _.Parser.createFromString(selector).parse());
+	}
 
+
+	public querySelectorAll(parent: DocumentParent, selector: string): Array<DocumentNode>
+	{
+		return this._querySelectorAllByAST(parent, _.Parser.createFromString(selector).parse());
+	}
+
+
+	public matches(element: DocumentNode, selector: string, parent?: DocumentParent): boolean
+	{
+		return this._matchesByAST(element, _.Parser.createFromString(selector).parse(), parent);
+	}
+
+
+	public _querySelectorByAST(parent: DocumentParent, ast: _.ASTQuery): DocumentNode
+	{
 		for (let i = 0; i < ast.selectors.length; i++) {
 			let found = this.scan(parent, ast.selectors[i], true);
 
@@ -32,9 +48,8 @@ export class Matcher
 	}
 
 
-	public querySelectorAll(parent: DocumentParent, selector: string): Array<DocumentNode>
+	public _querySelectorAllByAST(parent: DocumentParent, ast: _.ASTQuery): Array<DocumentNode>
 	{
-		let ast = _.Parser.createFromString(selector).parse();
 		let found = [];
 
 		for (let i = 0; i < ast.selectors.length; i++) {
@@ -45,13 +60,13 @@ export class Matcher
 	}
 
 
-	public matches(element: DocumentNode, selector: string, parent?: DocumentParent): boolean
+	public _matchesByAST(element: DocumentNode, ast: _.ASTQuery, parent?: DocumentParent): boolean
 	{
 		if (!parent) {
 			parent = getTopParent(this.walker, element);
 		}
 
-		let matches = this.querySelectorAll(parent, selector);
+		let matches = this._querySelectorAllByAST(parent, ast);
 
 		return matches.indexOf(element) >= 0;
 	}
@@ -191,6 +206,7 @@ export class Matcher
 				case 'last-child': return isElementLastChild(this.walker, element);
 				case 'first-of-type': return isElementFirstOfType(this.walker, element);
 				case 'last-of-type': return isElementLastOfType(this.walker, element);
+				case 'not': return isElementAllowedForNot(this, this.walker, element, rule.fn);
 			}
 
 			throw new Error(`Matcher: can not match by pseudo class :${rule.name}`);
@@ -309,4 +325,10 @@ function isElementLastOfType(walker: IDocumentWalker, element: DocumentNode): bo
 	});
 
 	return others[others.length - 1] === element;
+}
+
+
+function isElementAllowedForNot(matcher: Matcher, walker: IDocumentWalker, element: DocumentNode, fn: _.ASTSelector): boolean
+{
+	return !matcher._matchesByAST(element, new _.ASTQuery([fn]), walker.getParentNode(element));
 }
