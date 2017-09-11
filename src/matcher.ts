@@ -212,6 +212,10 @@ export class Matcher
 			throw new Error(`Matcher: can not match by pseudo class :${rule.name}`);
 		}
 
+		if (rule instanceof _.ASTPseudoElement) {
+			return true;
+		}
+
 		if (rule instanceof _.ASTAttribute) {
 			let value = this.walker.getAttribute(element, rule.name);
 

@@ -104,3 +104,5 @@ let matches = matcher.matches(element, 'a.btn');					// true
 * [Last child](https://developer.mozilla.org/en-US/docs/Web/CSS/:last-child) (`:last-child`)
 * [Last of type](https://developer.mozilla.org/en-US/docs/Web/CSS/:last-of-type) (`:last-of-type`)
 * [Not](https://developer.mozilla.org/en-US/docs/Web/CSS/:not) (`:not()`)
+* [Before](https://developer.mozilla.org/en-US/docs/Web/CSS/::before) (`::before`)
+* [After](https://developer.mozilla.org/en-US/docs/Web/CSS/::after) (`::after`)
