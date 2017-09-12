@@ -14,7 +14,7 @@
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
 	"dependencies": {
-		"@slicky/ast-query-selector": "^1.1.0",
+		"@slicky/ast-query-selector": "^1.1.1",
 		"@slicky/utils": "^1.0.11"
 	},
 	"devDependencies": {
